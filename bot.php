@@ -37,7 +37,7 @@ if (!is_null($events['events'])) {
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
 			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-            curl_setopt($ch, CURLOPT_URL, 'http://en.wikipedia.org/w/api.php?action=query&titles='.$post.'&prop=imageinfo&iiprop=url&format=json');
+           // curl_setopt($ch, CURLOPT_URL, 'http://en.wikipedia.org/w/api.php?action=query&titles='.$post.'&prop=imageinfo&iiprop=url&format=json');
 			$result = curl_exec($ch);
 			curl_close($ch);
 
