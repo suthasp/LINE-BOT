@@ -5,6 +5,12 @@ $access_token = 'mEOx3Km33RvGppLnFUmE1yxXHOM0G4JCQbrj7Lq1JaGoRl5DYyb/dg1SA2Rp5ZF
 $content = file_get_contents('php://input');
 // Parse JSON
 $events = json_decode($content, true);
+
+$jsonObj = json_decode($json_string); //รับ JSON มา decode เป็น StdObj
+$to = $jsonObj->{"result"}[0]->{"content"}->{"from"}; //หาผู้ส่ง 
+$text = $jsonObj->{"result"}[0]->{"content"}->{"text"}; //หาข้อความที่โพสมา
+$text_ex = explode(':', $text); //เอาข้อความมาแยก : ได้เป็น Array
+
 // Validate parsed JSON data
 if (!is_null($events['events'])) {
 	// Loop through each event
@@ -41,6 +47,42 @@ if (!is_null($events['events'])) {
 
 			echo $result . "\r\n";
 		}
+        
+        
 	}
+    
+    if($text_ex[0] == "อยากรู้"){ //ถ้าข้อความคือ "อยากรู้" ให้ทำการดึงข้อมูลจาก Wikipedia หาจากไทยก่อน
+    $headers = array('Content-Type: application/json', 'Authorization: Bearer ' . $access_token);
+    $ch1 = curl_init();
+    curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, false); 
+    curl_setopt($ch1, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch1, CURLOPT_HTTPHEADER, $headers); 
+    curl_setopt($ch1, CURLOPT_URL, 'https://th.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles='.$text_ex[1]);
+    $result1 = curl_exec($ch1); 
+    curl_close($ch1);
+    $obj = json_decode($result1, true);
+    foreach($obj['query']['pages'] as $key => $val){
+        $result_text = $val['extract'];
+    }
+if(empty($result_text)){//ถ้าไม่พบให้หาจาก en
+    $headers = array('Content-Type: application/json', 'Authorization: Bearer ' . $access_token);
+    $ch1 = curl_init();
+    curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch1, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch1, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch1, CURLOPT_URL, 'https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles='.$text_ex[1]);
+    $result1 = curl_exec($ch1);
+    curl_close($ch1);
+    $obj = json_decode($result1, true);
+    foreach($obj['query']['pages'] as $key => $val){
+        $result_text = $val['extract'];
+    }
 }
+        if(empty($result_text)){//หาจาก en ไม่พบก็บอกว่า ไม่พบข้อมูล ตอบกลับไป
+        $result_text = 'ไม่พบข้อมูล';
+    }
+    $response_format_text = ['contentType'=>1,"toType"=>1,"text"=>$result_text];
+}
+}
+
 echo "OK";
