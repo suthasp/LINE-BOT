@@ -54,7 +54,7 @@ if (!is_null($events['events'])) {
     if($text_ex[0] == "อยากรู้"){ //ถ้าข้อความคือ "อยากรู้" ให้ทำการดึงข้อมูลจาก Wikipedia หาจากไทยก่อน
     $headers = array('Content-Type: application/json', 'Authorization: Bearer ' . $access_token);
     $ch1 = curl_init();
-    curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, false); 
+    curl_setopt($ch1, CURLOPT_CUSTOMREQUEST, "POST");
     curl_setopt($ch1, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch1, CURLOPT_HTTPHEADER, $headers); 
     curl_setopt($ch1, CURLOPT_URL, 'https://th.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles='.$text_ex[1]);
@@ -67,7 +67,7 @@ if (!is_null($events['events'])) {
 if(empty($result_text)){//ถ้าไม่พบให้หาจาก en
     $headers = array('Content-Type: application/json', 'Authorization: Bearer ' . $access_token);
     $ch1 = curl_init();
-    curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch1, CURLOPT_CUSTOMREQUEST, "POST");
     curl_setopt($ch1, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch1, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch1, CURLOPT_URL, 'https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles='.$text_ex[1]);
