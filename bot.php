@@ -18,8 +18,12 @@ if (!is_null($events['events'])) {
 
 			// Build message to reply back
 			$messages = [
+                {
 				'type' => 'text',
-				'text' => 'สวัสดีปีใหม่ 2017'
+				'text' => 'ส่งท้ายปีเก่า 2016'} ,
+                {
+				'type' => 'text',
+				'text' => 'สวัสดีปีใหม่ 2017'}
 			];
 
 			// Make a POST Request to Messaging API to reply to sender
