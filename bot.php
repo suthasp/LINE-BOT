@@ -1,55 +1,87 @@
 <?php
 $access_token = 'mEOx3Km33RvGppLnFUmE1yxXHOM0G4JCQbrj7Lq1JaGoRl5DYyb/dg1SA2Rp5ZF8xbpb1XUy26/YiUusigxI7L06hIYO8ecI6+Gu0PYPsFdxuusguUFjo6n006u2gN12/AkZiol0Sk8+opyVrZ3MsQdB04t89/1O/w1cDnyilFU=';
 
-// Get POST body content
-$content = file_get_contents('php://input');
-// Parse JSON
-$events = json_decode($content, true);
-// Validate parsed JSON data
-if (!is_null($events['events'])) {
-	// Loop through each event
-	foreach ($events['events'] as $event) {
-		// Reply only when message sent is in 'text' format
-		if ($event['type'] == 'message' && $event['message']['type'] == 'text') {
-			// Get text sent
-			$text = $event['message']['text'];
-			// Get replyToken
-			$replyToken = $event['replyToken'];
+$json_string = file_get_contents('php://input');
+$jsonObj = json_decode($json_string); //รับ JSON มา decode เป็น StdObj
+$to = $jsonObj->{"result"}[0]->{"content"}->{"from"}; //หาผู้ส่ง
+$text = $jsonObj->{"result"}[0]->{"content"}->{"text"}; //หาข้อความที่โพสมา
+$text_ex = explode(':', $text); //เอาข้อความมาแยก : ได้เป็น Array
 
-			// Build message to reply back
-			$messages = [
-				'type' => 'text',
-				'text' => $text
-			];
-
-			// Make a POST Request to Messaging API to reply to sender
-			$url = 'https://api.line.me/v2/bot/message/reply';
-			$data = [
-				'replyToken' => $replyToken,
-				'messages' => [$messages],
-			];
-			$post = json_encode($data);
-			$headers = array('Content-Type: application/json', 'Authorization: Bearer ' . $access_token);
-			$ch = curl_init();
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_URL, 'https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles='.$post);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
-			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-			$result = curl_exec($ch);
-			curl_close($ch);
-            $json = json_decode($result);
-
-            $content = $json->query->pages;
-            $wiki_id = '';
-            foreach ($content as $key => $value) {
-                $wiki_id = $key;
-                }
-            echo $content = $content->$wiki_id->extract;
-			//echo $result . "\r\n";
-		}
-	}
+if($text_ex[0] == "อยากรู้"){ //ถ้าข้อความคือ "อยากรู้" ให้ทำการดึงข้อมูลจาก Wikipedia หาจากไทยก่อน
+    $ch1 = curl_init(); 
+    curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, false); 
+    curl_setopt($ch1, CURLOPT_RETURNTRANSFER, true); 
+    curl_setopt($ch1, CURLOPT_URL, 'https://th.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles='.$text_ex[1]); 
+    $result1 = curl_exec($ch1); 
+    curl_close($ch1);
+    
+    $obj = json_decode($result1, true);
+    
+    foreach($obj['query']['pages'] as $key => $val){
+        $result_text = $val['extract']; 
+    }
+    
+    if(empty($result_text)){//ถ้าไม่พบให้หาจาก en
+        $ch1 = curl_init();
+        curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch1, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch1, CURLOPT_URL, 'https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles='.$text_ex[1]);
+        $result1 = curl_exec($ch1);
+        curl_close($ch1);
+        
+        $obj = json_decode($result1, true);
+        
+        foreach($obj['query']['pages'] as $key => $val){
+            
+            $result_text = $val['extract'];
+            
+        } 
+    }
+    if(empty($result_text)){//หาจาก en ไม่พบก็บอกว่า ไม่พบข้อมูล ตอบกลับไป
+        $result_text = 'ไม่พบข้อมูล';
+        } 
+    $response_format_text = ['contentType'=>1,"toType"=>1,"text"=>$result_text];
+        
+    }
+else if($text_ex[0] == "อากาศ"){//ถ้าพิมพ์มาว่า อากาศ ก็ให้ไปดึง API จาก wunderground มา
+    $ch1 = curl_init();
+    curl_setopt($ch1, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch1, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch1, CURLOPT_URL, 'http://api.wunderground.com/api/yourkey/forecast/lang:TH/q/Thailand/'.str_replace(' ', '%20', $text_ex[1]).'.json');
+    $result1 = curl_exec($ch1);
+    curl_close($ch1);
+    $obj = json_decode($result1, true);
+    
+    if(isset($obj['forecast']['txt_forecast']['forecastday'][0]['fcttext_metric'])){
+        $result_text = $obj['forecast']['txt_forecast']['forecastday'][0]['fcttext_metric'];
+        }
+        else
+        {//ถ้าไม่เจอกับตอบกลับว่าไม่พบข้อมูล
+        $result_text = 'ไม่พบข้อมูล';
+            }
+    
+        $response_format_text = ['contentType'=>1,"toType"=>1,"text"=>$result_text];
+    }else if($text == 'บอกมา'){//คำอื่นๆ ที่ต้องการให้ Bot ตอบกลับเมื่อโพสคำนี้มา เช่นโพสว่า บอกมา ให้ตอบว่า ความลับนะ
+        $response_format_text = ['contentType'=>1,"toType"=>1,"text"=>"ความลับนะ"];
+    }else{//นอกนั้นให้โพส สวัสดี
+        $response_format_text = ['contentType'=>1,"toType"=>1,"text"=>"สวัสดี"];
 }
+
+// toChannel?eventType
+        $post_data = ["to"=>[$to],"toChannel"=>"1383378250","eventType"=>"138311608800106203","content"=>$response_format_text]; //ส่งข้อมูลไป
+        
+        $ch = curl_init("https://api.line.me/v2/bot/message/reply");
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post_data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array( 
+            'Content-Type: application/json; charser=UTF-8', 
+            'X-Line-ChannelID: YOUR ChannelID', 
+            'X-Line-ChannelSecret: YOUR ChannelSecret', 
+            'X-Line-Trusted-User-With-ACL: YOUR MID' 
+        ));
+        $result = curl_exec($ch); 
+        curl_close($ch);
+  
 echo "OK";
