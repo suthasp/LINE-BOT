@@ -40,8 +40,15 @@ if (!is_null($events['events'])) {
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
 			$result = curl_exec($ch);
 			curl_close($ch);
+            $json = json_decode($result);
 
-			echo $result . "\r\n";
+            $content = $json->query->pages;
+            $wiki_id = '';
+            foreach ($content as $key => $value) {
+                $wiki_id = $key;
+                }
+            echo $content = $content->$wiki_id->extract;
+			//echo $result . "\r\n";
 		}
 	}
 }
