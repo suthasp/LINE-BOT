@@ -31,9 +31,10 @@ if (!is_null($events['events'])) {
 			$post = json_encode($data);
 			$headers = array('Content-Type: application/json', 'Authorization: Bearer ' . $access_token);
 			$ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            //curl_setopt($ch, CURLOPT_URL, 'https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles='.$post);
+            curl_setopt($ch, CURLOPT_URL, 'https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles='.$post);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
 			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
