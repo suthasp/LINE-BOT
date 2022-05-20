@@ -18,7 +18,7 @@ $dbname = "touchcom_esp32";
 // REPLACE with Database user
 $username = "touchcom_board";
 // REPLACE with Database user password
-$password = "Engimanyz4714";
+$password = "QngSDWimanyz2323";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
